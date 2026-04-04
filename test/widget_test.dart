@@ -1,30 +1,75 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:g9_personal_health_tracker/main.dart';
+import 'package:personal_health_diary/main.dart';
+import 'package:personal_health_diary/src/models/user.dart';
+import 'package:personal_health_diary/src/providers/auth_provider.dart';
+import 'package:personal_health_diary/src/services/auth_service.dart';
+
+class _FakeAuthService implements AuthService {
+  @override
+  Stream<User?> get authStateChanges => const Stream<User?>.empty();
+
+  @override
+  User? get currentUser => null;
+
+  @override
+  String? get currentUserId => null;
+
+  @override
+  Future<void> deleteAccount() async {}
+
+  @override
+  Future<User> loginWithEmail({
+    required String email,
+    required String password,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> reloadUser() async {}
+
+  @override
+  Future<void> sendEmailVerification() async {}
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {}
+
+  @override
+  Future<void> signOut() async {}
+
+  @override
+  Future<User> signInWithGoogle() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<User> signUpWithEmail({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+  }) {
+    throw UnimplementedError();
+  }
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('app boots to the auth flow', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authServiceProvider.overrideWithValue(_FakeAuthService())],
+        child: const MyApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(find.text('Đăng nhập'), findsOneWidget);
   });
 }

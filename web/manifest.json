@@ -1,6 +1,6 @@
 {
-    "name": "g9_personal_health_tracker",
-    "short_name": "g9_personal_health_tracker",
+    "name": "personal_health_diary",
+    "short_name": "personal_health_diary",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
