@@ -8,6 +8,7 @@ import '../providers/auth_provider.dart';
 import '../providers/dashboard_refresh_provider.dart';
 import '../services/cloudflare_ai_service.dart';
 import '../services/nutrition_log_service.dart';
+import '../utils/user_friendly_error.dart';
 
 class AiFoodScreen extends ConsumerStatefulWidget {
   final String? initialSource;
@@ -93,7 +94,10 @@ class _AiFoodScreenState extends ConsumerState<AiFoodScreen> {
       return 'Chưa cấu hình Cloudflare Workers AI. Hãy chạy app với --dart-define-from-file=env/cloudflare.local.json.';
     }
 
-    return 'Phân tích AI thất bại. Vui lòng thử lại sau.';
+    return UserFriendlyError.message(
+      error,
+      fallback: 'Phân tích AI chưa thành công. Vui lòng thử lại sau.',
+    );
   }
 
   Future<void> _pickAndAnalyze(ImageSource source) async {

@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../providers/step_light_provider.dart';
 import '../services/step_light_monitor_service.dart';
+import '../utils/user_friendly_error.dart';
 
 class StepLightScreen extends ConsumerStatefulWidget {
   const StepLightScreen({super.key});
@@ -28,6 +29,10 @@ class _StepLightScreenState extends ConsumerState<StepLightScreen> {
     final totalSteps = _syncedSteps > 0 ? _syncedSteps : _steps;
     final stepProgress = (totalSteps % 10000) / 10000;
     final lightIsLow = _lightLux < 15;
+    final safeStatus = UserFriendlyError.message(
+      _status,
+      fallback: 'Theo dõi bước chân và ánh sáng đang hoạt động.',
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -66,64 +71,79 @@ class _StepLightScreenState extends ConsumerState<StepLightScreen> {
                       const Spacer(),
                       FilledButton.tonal(
                         onPressed: () async {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đang kiểm tra và xin quyền...'),
-                            ),
-                          );
-
-                          final result = await _monitor
-                              .requestRuntimePermissions();
-                          if (!context.mounted) return;
-
-                          if (result.hasPermanentDenied) {
-                            final shouldOpenSettings = await showDialog<bool>(
-                              context: context,
-                              builder: (dialogContext) => AlertDialog(
-                                title: const Text('Cần mở Cài đặt hệ thống'),
-                                content: const Text(
-                                  'Một số quyền đã bị từ chối vĩnh viễn. Hãy mở Cài đặt ứng dụng để cấp quyền chạy nền và thông báo.',
-                                ),
-                                actions: [
-                                  OutlinedButton(
-                                    onPressed: () =>
-                                        Navigator.pop(dialogContext, false),
-                                    child: const Text('Để sau'),
-                                  ),
-                                  FilledButton(
-                                    onPressed: () =>
-                                        Navigator.pop(dialogContext, true),
-                                    child: const Text('Mở cài đặt'),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (shouldOpenSettings == true) {
-                              await openAppSettings();
-                              await _monitor.syncPermissionStates();
-                              if (!context.mounted) return;
-                            }
-                          }
-
-                          if (!context.mounted) return;
-
-                          if (!result.hasNotificationPermission ||
-                              !result.hasActivityPermission) {
+                          try {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                  'Chưa cấp đủ quyền. Vui lòng cấp quyền để tiếp tục.',
-                                ),
+                                content: Text('Đang kiểm tra và xin quyền...'),
                               ),
                             );
-                          } else {
+
+                            final result = await _monitor
+                                .requestRuntimePermissions();
+                            if (!context.mounted) return;
+
+                            if (result.hasPermanentDenied) {
+                              final shouldOpenSettings = await showDialog<bool>(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: const Text('Cần mở Cài đặt hệ thống'),
+                                  content: const Text(
+                                    'Một số quyền đã bị từ chối vĩnh viễn. Hãy mở Cài đặt ứng dụng để cấp quyền chạy nền và thông báo.',
+                                  ),
+                                  actions: [
+                                    OutlinedButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext, false),
+                                      child: const Text('Để sau'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext, true),
+                                      child: const Text('Mở cài đặt'),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (shouldOpenSettings == true) {
+                                await openAppSettings();
+                                await _monitor.syncPermissionStates();
+                                if (!context.mounted) return;
+                              }
+                            }
+
+                            if (!context.mounted) return;
+
+                            if (!result.hasNotificationPermission ||
+                                !result.hasActivityPermission) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Chưa cấp đủ quyền. Vui lòng cấp quyền để tiếp tục.',
+                                  ),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    result.changed
+                                        ? 'Đã cập nhật quyền thành công.'
+                                        : 'Quyền đã được cấp trước đó.',
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  result.changed
-                                      ? 'Đã cập nhật quyền thành công.'
-                                      : 'Quyền đã được cấp trước đó.',
+                                  UserFriendlyError.message(
+                                    e,
+                                    fallback:
+                                        'Không thể cập nhật quyền lúc này. Vui lòng thử lại.',
+                                  ),
                                 ),
                               ),
                             );
@@ -280,7 +300,7 @@ class _StepLightScreenState extends ConsumerState<StepLightScreen> {
                 children: [
                   Icon(Icons.info_outline, color: scheme.primary),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(_status)),
+                  Expanded(child: Text(safeStatus)),
                 ],
               ),
             ),

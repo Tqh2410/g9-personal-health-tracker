@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth_widgets.dart';
 import '../../models/auth_exception.dart';
+import '../../utils/user_friendly_error.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -50,7 +51,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Gửi email đặt lại mật khẩu thất bại';
+        _errorMessage = UserFriendlyError.message(
+          e,
+          fallback:
+              'Không thể gửi email đặt lại mật khẩu lúc này. Vui lòng thử lại.',
+        );
       });
     } finally {
       if (mounted) {

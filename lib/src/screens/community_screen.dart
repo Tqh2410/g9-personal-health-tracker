@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
+import '../utils/user_friendly_error.dart';
 
 class CommunityScreen extends ConsumerWidget {
   const CommunityScreen({super.key});
@@ -168,18 +169,33 @@ class CommunityScreen extends ConsumerWidget {
                 return;
               }
 
-              final authorName = await _getAuthorDisplayName(uid);
-              await FirebaseFirestore.instance.collection('posts').add({
-                'authorId': uid,
-                'authorName': authorName,
-                'title': postTitle,
-                'content': content,
-                'steps': steps,
-                'likes': 0,
-                'comments': 0,
-                'createdAt': FieldValue.serverTimestamp(),
-              });
-              if (context.mounted) Navigator.pop(context);
+              try {
+                final authorName = await _getAuthorDisplayName(uid);
+                await FirebaseFirestore.instance.collection('posts').add({
+                  'authorId': uid,
+                  'authorName': authorName,
+                  'title': postTitle,
+                  'content': content,
+                  'steps': steps,
+                  'likes': 0,
+                  'comments': 0,
+                  'createdAt': FieldValue.serverTimestamp(),
+                });
+                if (context.mounted) Navigator.pop(context);
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      UserFriendlyError.message(
+                        e,
+                        fallback:
+                            'Không thể đăng bài lúc này. Vui lòng thử lại.',
+                      ),
+                    ),
+                  ),
+                );
+              }
             },
             child: const Text('Đăng'),
           ),
@@ -228,24 +244,39 @@ class CommunityScreen extends ConsumerWidget {
     final challengeRef = FirebaseFirestore.instance
         .collection('challenges')
         .doc(_dailyChallengeDocId());
-    await challengeRef.set({
-      'name': '10,000 bước/ngày',
-      'dateKey': _todayKey(),
-      'target': 10000,
-      'participantIds': FieldValue.arrayUnion([uid]),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    try {
+      await challengeRef.set({
+        'name': '10,000 bước/ngày',
+        'dateKey': _todayKey(),
+        'target': 10000,
+        'participantIds': FieldValue.arrayUnion([uid]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          alreadyJoined
-              ? 'Bạn đã tham gia thử thách. Đây là bảng xếp hạng mới nhất.'
-              : 'Đã tham gia thử thách thành công.',
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            alreadyJoined
+                ? 'Bạn đã tham gia thử thách. Đây là bảng xếp hạng mới nhất.'
+                : 'Đã tham gia thử thách thành công.',
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            UserFriendlyError.message(
+              e,
+              fallback:
+                  'Không thể tham gia thử thách lúc này. Vui lòng thử lại.',
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _leaveChallenge(
@@ -282,16 +313,31 @@ class CommunityScreen extends ConsumerWidget {
         .collection('challenges')
         .doc(_dailyChallengeDocId());
 
-    await challengeRef.set({
-      'participantIds': FieldValue.arrayRemove([uid]),
-      'participants.$uid': FieldValue.delete(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    try {
+      await challengeRef.set({
+        'participantIds': FieldValue.arrayRemove([uid]),
+        'participants.$uid': FieldValue.delete(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bạn đã hủy tham gia thử thách hôm nay.')),
-    );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bạn đã hủy tham gia thử thách hôm nay.')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            UserFriendlyError.message(
+              e,
+              fallback:
+                  'Không thể hủy tham gia thử thách lúc này. Vui lòng thử lại.',
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _showLeaderboardDialog(
@@ -724,10 +770,27 @@ class CommunityScreen extends ConsumerWidget {
                                         onPressed: currentUid == null
                                             ? null
                                             : () async {
-                                                await _toggleLikePost(
-                                                  d.reference,
-                                                  currentUid,
-                                                );
+                                                try {
+                                                  await _toggleLikePost(
+                                                    d.reference,
+                                                    currentUid,
+                                                  );
+                                                } catch (e) {
+                                                  if (!context.mounted) return;
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        UserFriendlyError.message(
+                                                          e,
+                                                          fallback:
+                                                              'Không thể cập nhật lượt thích lúc này. Vui lòng thử lại.',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
                                               },
                                         icon: Icon(
                                           liked
@@ -768,11 +831,26 @@ class CommunityScreen extends ConsumerWidget {
                           ),
                         ),
                         onDismissed: (_) async {
-                          await d.reference.delete();
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Đã xóa bài đăng')),
-                          );
+                          try {
+                            await d.reference.delete();
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Đã xóa bài đăng')),
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  UserFriendlyError.message(
+                                    e,
+                                    fallback:
+                                        'Không thể xóa bài đăng lúc này. Vui lòng thử lại.',
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
                         },
                         child: card,
                       );

@@ -5,6 +5,7 @@ import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth_widgets.dart';
 import '../../models/auth_exception.dart';
+import '../../utils/user_friendly_error.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -66,7 +67,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Đã xảy ra lỗi không mong muốn';
+        _errorMessage = UserFriendlyError.message(
+          e,
+          fallback: 'Không thể đăng nhập lúc này. Vui lòng thử lại sau.',
+        );
       });
     } finally {
       if (mounted) {
@@ -91,7 +95,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Đăng nhập Google thất bại';
+        _errorMessage = UserFriendlyError.message(
+          e,
+          fallback: 'Đăng nhập Google chưa thành công. Vui lòng thử lại.',
+        );
       });
     } finally {
       if (mounted) {
