@@ -7,6 +7,7 @@ import '../models/nutrition_entry.dart';
 import '../providers/auth_provider.dart';
 import '../providers/dashboard_refresh_provider.dart';
 import '../services/nutrition_service.dart';
+import '../utils/user_friendly_error.dart';
 
 final _nutritionServiceProvider = Provider<NutritionService>(
   (ref) => NutritionService(),
@@ -402,7 +403,8 @@ class NutritionScreen extends ConsumerWidget {
                 if (!dialogContext.mounted) return;
                 setModalState(() {
                   isListening = false;
-                  transcript = 'Lỗi nhận giọng nói: ${error.errorMsg}';
+                  transcript =
+                      'Không thể nhận giọng nói lúc này. Vui lòng thử lại.';
                 });
               },
             );
@@ -789,7 +791,18 @@ class NutritionScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, stackTrace) => Center(child: Text('Lỗi: $e')),
+        error: (e, stackTrace) => Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              UserFriendlyError.message(
+                e,
+                fallback: 'Không thể tải nhật ký dinh dưỡng lúc này.',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
       ),
     );
   }

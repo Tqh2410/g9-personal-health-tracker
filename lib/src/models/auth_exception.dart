@@ -14,7 +14,7 @@ class AuthException implements Exception {
       );
     }
     return AuthException(
-      message: 'An unexpected error occurred',
+      message: 'Đã xảy ra sự cố xác thực. Vui lòng thử lại sau.',
       code: 'unknown_error',
     );
   }
@@ -22,25 +22,25 @@ class AuthException implements Exception {
   static String _getErrorMessage(String code) {
     switch (code) {
       case 'weak-password':
-        return 'The password provided is too weak.';
+        return 'Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn.';
       case 'email-already-in-use':
-        return 'An account with that email already exists.';
+        return 'Email này đã được sử dụng. Vui lòng dùng email khác.';
       case 'invalid-email':
-        return 'The email address is not valid.';
+        return 'Email không hợp lệ. Vui lòng kiểm tra lại.';
       case 'operation-not-allowed':
-        return 'Operation is not allowed.';
+        return 'Tính năng này hiện chưa được bật. Vui lòng thử lại sau.';
       case 'user-disabled':
-        return 'This user account has been disabled.';
+        return 'Tài khoản này đã bị vô hiệu hóa. Vui lòng liên hệ hỗ trợ.';
       case 'user-not-found':
-        return 'No user found with this email.';
+        return 'Không tìm thấy tài khoản với email này.';
       case 'wrong-password':
-        return 'Incorrect password.';
+        return 'Mật khẩu chưa đúng. Vui lòng thử lại.';
       case 'invalid-credential':
-        return 'Invalid credentials. Please try again.';
+        return 'Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.';
       case 'network-request-failed':
-        return 'Network error. Please check your connection.';
+        return 'Không thể kết nối mạng. Vui lòng kiểm tra Internet.';
       default:
-        return 'An error occurred: $code';
+        return 'Không thể xác thực lúc này. Vui lòng thử lại sau.';
     }
   }
 

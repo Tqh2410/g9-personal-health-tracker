@@ -79,7 +79,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Đăng ký thất bại: $e';
+        _errorMessage = 'Đăng ký chưa thành công. Vui lòng thử lại sau.';
       });
     } finally {
       if (mounted) {

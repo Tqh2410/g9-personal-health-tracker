@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
 import '../services/sleep_habit_reminder_service.dart';
+import '../utils/user_friendly_error.dart';
 
 class SleepHabitScreen extends ConsumerStatefulWidget {
   const SleepHabitScreen({super.key});
@@ -351,7 +352,14 @@ class _SleepHabitScreenState extends ConsumerState<SleepHabitScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không bật được lịch nhắc: $error')),
+        SnackBar(
+          content: Text(
+            UserFriendlyError.message(
+              error,
+              fallback: 'Không thể bật lịch nhắc lúc này. Vui lòng thử lại.',
+            ),
+          ),
+        ),
       );
     } finally {
       if (mounted) {

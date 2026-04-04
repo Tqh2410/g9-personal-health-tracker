@@ -64,7 +64,10 @@ class AuthService {
     } on fb.FirebaseAuthException catch (e) {
       throw AuthException.fromFirebaseException(e);
     } catch (e) {
-      throw AuthException(message: 'Sign up failed: $e', code: 'signup_error');
+      throw AuthException(
+        message: 'Không thể tạo tài khoản lúc này. Vui lòng thử lại sau.',
+        code: 'signup_error',
+      );
     }
   }
 
@@ -84,7 +87,10 @@ class AuthService {
     } on fb.FirebaseAuthException catch (e) {
       throw AuthException.fromFirebaseException(e);
     } catch (e) {
-      throw AuthException(message: 'Login failed: $e', code: 'login_error');
+      throw AuthException(
+        message: 'Không thể đăng nhập lúc này. Vui lòng thử lại sau.',
+        code: 'login_error',
+      );
     }
   }
 
@@ -139,7 +145,7 @@ class AuthService {
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException(
-        message: 'Đăng nhập Google thất bại: $e',
+        message: 'Đăng nhập Google chưa thành công. Vui lòng thử lại.',
         code: 'google_signin_error',
       );
     }
@@ -153,7 +159,7 @@ class AuthService {
       throw AuthException.fromFirebaseException(e);
     } catch (e) {
       throw AuthException(
-        message: 'Failed to send reset email: $e',
+        message: 'Không thể gửi email đặt lại mật khẩu lúc này.',
         code: 'reset_email_error',
       );
     }
@@ -171,7 +177,7 @@ class AuthService {
       await _firebaseAuth.signOut();
     } catch (e) {
       throw AuthException(
-        message: 'Sign out failed: $e',
+        message: 'Không thể đăng xuất lúc này. Vui lòng thử lại.',
         code: 'signout_error',
       );
     }

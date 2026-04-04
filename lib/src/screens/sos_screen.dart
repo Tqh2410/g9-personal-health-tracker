@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/auth_provider.dart';
+import '../utils/user_friendly_error.dart';
 
 class SosScreen extends ConsumerStatefulWidget {
   const SosScreen({super.key});
@@ -347,7 +348,12 @@ class _SosScreenState extends ConsumerState<SosScreen> {
             'Đã mở Gmail/ứng dụng mail cho ${recipients.length} liên hệ',
       );
     } catch (e) {
-      setState(() => _status = 'Lỗi SOS: $e');
+      setState(() {
+        _status = UserFriendlyError.message(
+          e,
+          fallback: 'Không thể gửi tín hiệu SOS lúc này. Vui lòng thử lại.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() {

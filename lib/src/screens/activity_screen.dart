@@ -7,6 +7,7 @@ import '../models/activity_entry.dart';
 import '../providers/auth_provider.dart';
 import '../providers/dashboard_refresh_provider.dart';
 import '../services/activity_service.dart';
+import '../utils/user_friendly_error.dart';
 
 final _activityServiceProvider = Provider<ActivityService>(
   (ref) => ActivityService(),
@@ -322,7 +323,8 @@ class ActivityScreen extends ConsumerWidget {
                 if (!dialogContext.mounted) return;
                 setModalState(() {
                   isListening = false;
-                  transcript = 'Lỗi nhận giọng nói: ${error.errorMsg}';
+                  transcript =
+                      'Không thể nhận giọng nói lúc này. Vui lòng thử lại.';
                 });
               },
             );
@@ -726,7 +728,18 @@ class ActivityScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, stackTrace) => Center(child: Text('Lỗi: $e')),
+        error: (e, stackTrace) => Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              UserFriendlyError.message(
+                e,
+                fallback: 'Không thể tải nhật ký hoạt động lúc này.',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
       ),
     );
   }
