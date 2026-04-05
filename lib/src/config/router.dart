@@ -1,0 +1,61 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../screens/auth/login_screen.dart';
+import '../screens/auth/signup_screen.dart';
+import '../screens/auth/forgot_password_screen.dart';
+import '../screens/step_light_screen.dart';
+import '../providers/auth_provider.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authStateProvider);
+
+  return GoRouter(
+    initialLocation: '/login',
+    redirect: (context, state) async {
+      final isLoggingIn =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/sign-up' ||
+          state.matchedLocation == '/forgot-password';
+
+      return authState.when(
+        data: (user) {
+          if (user != null && isLoggingIn) {
+            return '/step-light';
+          }
+          if (user == null && !isLoggingIn) {
+            return '/login';
+          }
+          return null;
+        },
+        loading: () => null,
+        error: (_, _) => '/login',
+      );
+    },
+    routes: [
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/sign-up',
+        name: 'sign-up',
+        builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        name: 'forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/step-light',
+        name: 'step-light',
+        builder: (context, state) => const StepLightScreen(),
+      ),
+    ],
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(child: Text('Không tìm thấy trang: ${state.uri}')),
+    ),
+  );
+});
