@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "93165388661",
+    "project_id": "personal-health-diary",
+    "storage_bucket": "personal-health-diary.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93165388661:android:c5b4d19b551178975e093c",
+        "android_client_info": {
+          "package_name": "com.example.personal_health_diary"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "93165388661-hveqqcgh8m0kqd2m8kius2e0dm7fhgep.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.personal_health_diary",
+            "certificate_hash": "94ad2593c6efc8316c8843b0f05e67d3cd5bd626"
+          }
+        },
+        {
+          "client_id": "93165388661-6i21lb1ajuurrckajijausgp2qbjv1t9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBojEUWLZL9O8qIVO-jlnnj6pusNYMPJdY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "93165388661-6i21lb1ajuurrckajijausgp2qbjv1t9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "93165388661-v5tt4nuroldj1uh7ur2uj4gh3c117gco.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.personalHealthDiary"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

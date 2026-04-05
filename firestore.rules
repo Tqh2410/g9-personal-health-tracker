@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Profile user + emergency contacts: chi owner truy cap
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Daily dashboard stats per day: users/{uid}/dailyStats/{yyyy-MM-dd}
+      match /dailyStats/{dateKey} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /activities/{activityId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /nutrition/{entryId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /vitals/{entryId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /sleepLogs/{entryId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /habits/{entryId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /voiceDiary/{entryId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /settings/{settingId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /emergencyContacts/{cid} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Vitals timeline by user/day: vitals/{uid}/{dateKey}/{vitalId}
+    match /vitals/{uid}/{dateKey}/{vitalId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Newsfeed posts
+    match /posts/{postId} {
+      // Public read
+      allow read: if true;
+
+      // Chi user dang nhap duoc tao post
+      allow create: if request.auth != null
+                    && request.resource.data.authorId == request.auth.uid;
+
+      // Update:
+      // - author duoc sua/xoa toan bo
+      // - user dang nhap khac chi duoc tang likes/comments
+      allow update: if request.auth != null && (
+        // author update toan bo
+        request.auth.uid == resource.data.authorId
+        ||
+        // non-author chi update likes/comments
+        (
+          request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['likes', 'comments'])
+          && request.resource.data.likes is int
+          && request.resource.data.comments is int
+          && request.resource.data.likes >= resource.data.likes - 1
+          && request.resource.data.comments >= resource.data.comments
+          && request.resource.data.likes <= resource.data.likes + 1
+          && request.resource.data.comments <= resource.data.comments + 1
+        )
+      );
+
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.authorId;
+
+      // Post like documents: each user can only create their own like once.
+      match /likes/{uid} {
+        allow read: if true;
+        allow create: if request.auth != null
+                      && request.auth.uid == uid
+                      && !exists(/databases/$(database)/documents/posts/$(postId)/likes/$(uid));
+        allow update: if false;
+        allow delete: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // SOS logs: user chi doc/ghi log cua chinh minh
+    match /sosLogs/{logId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.userId == request.auth.uid;
+    }
+
+    // Mail queue for Firebase Trigger Email extension / custom backend sender
+    // App chi duoc CREATE yeu cau gui mail SOS cua chinh user dang nhap.
+    match /mail/{mailId} {
+      allow create: if request.auth != null
+                    && request.resource.data.to is list
+                    && request.resource.data.to.size() > 0
+                    && request.resource.data.message is map
+                    && request.resource.data.message.subject is string
+                    && request.resource.data.message.text is string
+                    && request.resource.data.meta is map
+                    && request.resource.data.meta.userId == request.auth.uid
+                    && request.resource.data.meta.type == 'sos';
+
+      // Khong cho client doc/sua/xoa mail queue.
+      allow read, update, delete: if false;
+    }
+  }
+}

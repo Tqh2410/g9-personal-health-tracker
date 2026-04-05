@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local AI credentials
+/env/cloudflare.local.json
+
+# OAuth local secrets
+/env/client_secret_*.json

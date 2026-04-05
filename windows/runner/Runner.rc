@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "g9_personal_health_tracker" "\0"
+            VALUE "FileDescription", "personal_health_diary" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "g9_personal_health_tracker" "\0"
+            VALUE "InternalName", "personal_health_diary" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "g9_personal_health_tracker.exe" "\0"
-            VALUE "ProductName", "g9_personal_health_tracker" "\0"
+            VALUE "OriginalFilename", "personal_health_diary.exe" "\0"
+            VALUE "ProductName", "personal_health_diary" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
