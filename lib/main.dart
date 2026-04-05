@@ -284,7 +284,9 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(stepLightMonitorProvider);
+    if (Firebase.apps.isNotEmpty) {
+      ref.watch(stepLightMonitorProvider);
+    }
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
 
