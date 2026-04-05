@@ -45,7 +45,7 @@ app.*.map.json
 /android/app/release
 
 # Local AI credentials
-/env/cloudflare.local.json
+# /env/cloudflare.local.json  # Temporarily included for team submission
 
 # OAuth local secrets
 /env/client_secret_*.json
