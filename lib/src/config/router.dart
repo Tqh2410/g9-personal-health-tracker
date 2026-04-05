@@ -1,14 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:personal_health_diary/src/providers/auth_provider.dart';
 import 'package:personal_health_diary/src/screens/auth/forgot_password_screen.dart';
 import 'package:personal_health_diary/src/screens/auth/login_screen.dart';
 import 'package:personal_health_diary/src/screens/auth/signup_screen.dart';
 import 'package:personal_health_diary/src/screens/step_light_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authStateProvider);
+
   return GoRouter(
-    initialLocation: '/step-light',
+    initialLocation: '/login',
+    redirect: (context, state) async {
+      final isLoggingIn =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/sign-up' ||
+          state.matchedLocation == '/forgot-password';
+
+      return authState.when(
+        data: (user) {
+          if (user != null && isLoggingIn) {
+            return '/step-light';
+          }
+          if (user == null && !isLoggingIn) {
+            return '/login';
+          }
+          return null;
+        },
+        loading: () => null,
+        error: (_, _) => '/login',
+      );
+    },
     routes: [
       GoRoute(
         path: '/login',
