@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nhật ký sức khỏe</string>
+    <!-- Google OAuth Client ID -->
+    <string name="google_oauth_client_id">109939661295-qq42h1f8o1imss11us1iq0s6m4et48rc.apps.googleusercontent.com</string>
+    <!-- Google Calendar API Scopes -->
+    <string name="google_calendar_scopes">https://www.googleapis.com/auth/calendar</string>
+</resources>
