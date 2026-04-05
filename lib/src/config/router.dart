@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../screens/auth/login_screen.dart';
-import '../screens/auth/signup_screen.dart';
-import '../screens/auth/forgot_password_screen.dart';
-import '../screens/step_light_screen.dart';
-import '../providers/auth_provider.dart';
+import 'package:personal_health_diary/src/providers/auth_provider.dart';
+import 'package:personal_health_diary/src/screens/auth/forgot_password_screen.dart';
+import 'package:personal_health_diary/src/screens/auth/login_screen.dart';
+import 'package:personal_health_diary/src/screens/auth/signup_screen.dart';
+import 'package:personal_health_diary/src/screens/step_light_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
