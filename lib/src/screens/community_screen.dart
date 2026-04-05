@@ -63,14 +63,18 @@ class CommunityScreen extends ConsumerWidget {
   }
 
   Future<int> _getTodaySteps(String uid) async {
-    final snap = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('dailyStats')
-        .doc(_todayKey())
-        .get();
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('dailyStats')
+          .doc(_todayKey())
+          .get();
 
-    return ((snap.data()?['steps'] ?? 0) as num).toInt();
+      return ((snap.data()?['steps'] ?? 0) as num).toInt();
+    } catch (_) {
+      return 0;
+    }
   }
 
   Future<List<MapEntry<String, int>>> _buildLeaderboard(
@@ -87,7 +91,8 @@ class CommunityScreen extends ConsumerWidget {
       }),
     );
 
-    entries.removeWhere((entry) => entry.value <= 0);
+    // Keep all joined participants (including 0 steps) to avoid UI flipping
+    // between "no participants" and "has leaderboard" states.
     entries.sort((a, b) => b.value.compareTo(a.value));
     return entries;
   }
@@ -347,6 +352,7 @@ class CommunityScreen extends ConsumerWidget {
     String? currentUid,
   ) async {
     final scheme = Theme.of(context).colorScheme;
+    final leaderboardFuture = _buildLeaderboard(participantIds);
 
     await showModalBottomSheet<void>(
       context: context,
@@ -383,10 +389,19 @@ class CommunityScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Flexible(
                   child: FutureBuilder<List<MapEntry<String, int>>>(
-                    future: _buildLeaderboard(participantIds),
+                    future: leaderboardFuture,
                     builder: (context, rankSnap) {
                       if (rankSnap.connectionState != ConnectionState.done) {
                         return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (participantIds.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Chưa có ai tham gia thử thách hôm nay.',
+                            style: TextStyle(color: scheme.onSurfaceVariant),
+                          ),
+                        );
                       }
 
                       final ranks =
@@ -394,7 +409,7 @@ class CommunityScreen extends ConsumerWidget {
                       if (ranks.isEmpty) {
                         return Center(
                           child: Text(
-                            'Chưa có ai đạt trên 0 bước hôm nay.',
+                            'Chưa tải được dữ liệu bảng xếp hạng.',
                             style: TextStyle(color: scheme.onSurfaceVariant),
                           ),
                         );

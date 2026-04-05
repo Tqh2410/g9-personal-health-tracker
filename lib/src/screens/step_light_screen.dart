@@ -15,8 +15,12 @@ class StepLightScreen extends ConsumerStatefulWidget {
 
 class _StepLightScreenState extends ConsumerState<StepLightScreen> {
   StepLightMonitorService get _monitor => ref.watch(stepLightMonitorProvider);
-  int get _steps => _monitor.steps;
   int get _syncedSteps => _monitor.syncedSteps;
+  int get _dailyTargetSteps => _monitor.dailyTargetSteps;
+  int get _totalDisplayedSteps => _monitor.totalDisplayedSteps;
+  int get _pendingSyncSteps => _monitor.pendingSyncSteps;
+  bool get _hasPendingSync => _monitor.hasPendingSync;
+  bool get _hasNetworkConnection => _monitor.hasNetworkConnection;
   int get _lightLux => _monitor.lightLux;
   String get _status => _monitor.status;
   bool get _hasNotificationPermission => _monitor.hasNotificationPermission;
@@ -26,8 +30,13 @@ class _StepLightScreenState extends ConsumerState<StepLightScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final totalSteps = _syncedSteps > 0 ? _syncedSteps : _steps;
-    final stepProgress = (totalSteps % 10000) / 10000;
+    final totalSteps = _totalDisplayedSteps;
+    final displayedSyncedSteps = _syncedSteps > totalSteps
+        ? totalSteps
+        : _syncedSteps;
+    final stepProgress = _dailyTargetSteps <= 0
+        ? 0.0
+        : (totalSteps / _dailyTargetSteps).clamp(0.0, 1.0);
     final lightIsLow = _lightLux < 15;
     final safeStatus = UserFriendlyError.message(
       _status,
@@ -221,6 +230,29 @@ class _StepLightScreenState extends ConsumerState<StepLightScreen> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _hasNetworkConnection
+                              ? Colors.green.withValues(alpha: 0.12)
+                              : scheme.errorContainer,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          _hasNetworkConnection ? 'Online' : 'Offline',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _hasNetworkConnection
+                                ? Colors.green.shade700
+                                : scheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -232,7 +264,14 @@ class _StepLightScreenState extends ConsumerState<StepLightScreen> {
                       color: scheme.primary,
                     ),
                   ),
-                  Text('Mục tiêu hôm nay: 10.000 bước'),
+                  Text(
+                    _hasPendingSync
+                        ? 'Đã đồng bộ: $displayedSyncedSteps bước • Chờ đồng bộ: $_pendingSyncSteps bước'
+                        : 'Đồng bộ xong: $displayedSyncedSteps bước',
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 2),
+                  Text('Mục tiêu hôm nay: $_dailyTargetSteps bước'),
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(999),

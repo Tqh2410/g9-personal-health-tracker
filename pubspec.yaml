@@ -41,6 +41,7 @@ dependencies:
   
   # Networking & AI Integration
   http: ^1.1.0
+  connectivity_plus: ^6.1.3
 
   # Charts
   fl_chart: ^0.69.0

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -45,9 +46,11 @@ class StepLightMonitorService extends ChangeNotifier {
   StreamSubscription<StepCount>? _stepSub;
   StreamSubscription<int>? _lightSub;
   StreamSubscription<User?>? _authSub;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _dailyStatsSub;
   Timer? _sedentaryTimer;
   Timer? _stepSyncTimer;
+  Timer? _syncRetryTimer;
 
   bool _initialized = false;
   bool _hasNotificationPermission = false;
@@ -55,6 +58,7 @@ class StepLightMonitorService extends ChangeNotifier {
   bool _hasBatteryExemption = false;
   bool _syncInProgress = false;
   bool _syncQueued = false;
+  bool _hasNetworkConnection = true;
 
   int _steps = 0;
   int _lightLux = 0;
@@ -64,6 +68,7 @@ class StepLightMonitorService extends ChangeNotifier {
   int _lastMovementAt = DateTime.now().millisecondsSinceEpoch;
   int _lastSedentaryNotifyMs = 0;
   int _dailyCalories = 0;
+  int _dailyTargetSteps = 8000;
   double _dailyWaterLiters = 0;
   bool _lowLightNotifiedInCurrentStreak = false;
   String _lastCalorieAlertDate = '';
@@ -84,8 +89,17 @@ class StepLightMonitorService extends ChangeNotifier {
   bool get hasNotificationPermission => _hasNotificationPermission;
   bool get hasActivityPermission => _hasActivityPermission;
   bool get hasBatteryExemption => _hasBatteryExemption;
+  bool get hasNetworkConnection => _hasNetworkConnection;
   int get steps => _steps;
   int get syncedSteps => _syncedSteps;
+  int get dailyTargetSteps => _dailyTargetSteps;
+  int get pendingSyncSteps => (_steps - _lastSyncedSteps).clamp(0, 1 << 31);
+  int get totalDisplayedSteps {
+    final combined = _syncedSteps + pendingSyncSteps;
+    return combined > _steps ? combined : _steps;
+  }
+
+  bool get hasPendingSync => pendingSyncSteps > 0;
   int get lightLux => _lightLux;
   String get status => _status;
 
@@ -98,6 +112,7 @@ class StepLightMonitorService extends ChangeNotifier {
     await _restoreState();
     await _restoreSyncState();
     await _loadDeviceId();
+    await _startConnectivityWatch();
     _authSub = _auth.authStateChanges().listen(_handleAuthStateChanged);
     await _handleAuthStateChanged(_auth.currentUser);
     await _startTracking();
@@ -176,6 +191,7 @@ class StepLightMonitorService extends ChangeNotifier {
     if (uid == null || uid.isEmpty) {
       _syncedSteps = _steps;
       _dailyCalories = 0;
+      _dailyTargetSteps = 8000;
       _dailyWaterLiters = 0;
       notifyListeners();
       return;
@@ -190,11 +206,22 @@ class StepLightMonitorService extends ChangeNotifier {
     _dailyStatsSub = docRef.snapshots().listen((snapshot) {
       final data = snapshot.data();
       final cloudSteps = _toInt(data?['steps']);
+      final cloudTargetSteps = _normalizeTargetSteps(data?['targetSteps']);
       _dailyCalories = _toInt(data?['calories']);
       _dailyWaterLiters = _toDouble(data?['waterLiters']);
 
+      var shouldNotify = false;
       if (cloudSteps != _syncedSteps) {
         _syncedSteps = cloudSteps;
+        shouldNotify = true;
+      }
+
+      if (cloudTargetSteps != _dailyTargetSteps) {
+        _dailyTargetSteps = cloudTargetSteps;
+        shouldNotify = true;
+      }
+
+      if (shouldNotify) {
         notifyListeners();
       }
 
@@ -275,6 +302,12 @@ class StepLightMonitorService extends ChangeNotifier {
     return 0;
   }
 
+  int _normalizeTargetSteps(dynamic value) {
+    final parsed = _toInt(value);
+    if (parsed < 1000) return 1000;
+    return parsed;
+  }
+
   double _toDouble(dynamic value) {
     if (value is num) return value.toDouble();
     return 0;
@@ -326,6 +359,35 @@ class StepLightMonitorService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_syncStateDateKey, _syncedDateKey);
     await prefs.setInt(_syncStateStepsKey, _lastSyncedSteps);
+  }
+
+  bool _hasNetworkFromResults(List<ConnectivityResult> results) {
+    for (final result in results) {
+      if (result != ConnectivityResult.none) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _startConnectivityWatch() async {
+    final connectivity = Connectivity();
+    final initial = await connectivity.checkConnectivity();
+    _hasNetworkConnection = _hasNetworkFromResults(initial);
+
+    _connectivitySub = connectivity.onConnectivityChanged.listen((results) {
+      final next = _hasNetworkFromResults(results);
+      final changed = next != _hasNetworkConnection;
+      _hasNetworkConnection = next;
+
+      if (_hasNetworkConnection && _steps > _lastSyncedSteps) {
+        _queueStepSync();
+      }
+
+      if (changed) {
+        notifyListeners();
+      }
+    });
   }
 
   void _queueStepSync() {
@@ -400,7 +462,10 @@ class StepLightMonitorService extends ChangeNotifier {
   }
 
   Future<void> _startTracking() async {
-    if (_stepSub != null && _lightSub != null && _sedentaryTimer != null) {
+    if (_stepSub != null &&
+        _lightSub != null &&
+        _sedentaryTimer != null &&
+        _syncRetryTimer != null) {
       return;
     }
 
@@ -421,7 +486,6 @@ class StepLightMonitorService extends ChangeNotifier {
           _steps = relativeSteps < 0 ? event.steps : relativeSteps;
           _lastMovementAt = DateTime.now().millisecondsSinceEpoch;
           _status = 'Đang theo dõi bước chân';
-          _syncedSteps = _steps;
           notifyListeners();
           _queueStepSync();
         },
@@ -479,6 +543,17 @@ class StepLightMonitorService extends ChangeNotifier {
           );
         }
       });
+
+      // Retry cloud sync periodically so offline steps are pushed even when
+      // network returns but no new step event is generated.
+      _syncRetryTimer ??= Timer.periodic(const Duration(seconds: 30), (_) {
+        if (_currentUid == null || _currentUid!.isEmpty) {
+          return;
+        }
+        if (_steps > _lastSyncedSteps) {
+          _syncStepsToCloud();
+        }
+      });
     } catch (e) {
       _status = 'Không thể khởi tạo cảm biến: $e';
       notifyListeners();
@@ -501,10 +576,12 @@ class StepLightMonitorService extends ChangeNotifier {
   void dispose() {
     _stepSub?.cancel();
     _lightSub?.cancel();
+    _connectivitySub?.cancel();
     _sedentaryTimer?.cancel();
     _authSub?.cancel();
     _dailyStatsSub?.cancel();
     _stepSyncTimer?.cancel();
+    _syncRetryTimer?.cancel();
     super.dispose();
   }
 }
