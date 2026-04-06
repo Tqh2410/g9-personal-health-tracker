@@ -23,7 +23,7 @@ final activityStreamProvider = StreamProvider<List<ActivityEntry>>((ref) {
 class ActivityScreen extends ConsumerWidget {
   const ActivityScreen({super.key});
 
-  static const double _defaultWeightKg = 65;
+  static const double _defaultWeightKg = 65.0;
 
   String _formatDateTime(DateTime dateTime) {
     return DateFormat('HH:mm • dd/MM/yyyy').format(dateTime);
