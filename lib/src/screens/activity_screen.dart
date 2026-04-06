@@ -60,6 +60,7 @@ class ActivityScreen extends ConsumerWidget {
     return Icons.directions_walk;
   }
 
+  /// Remove Vietnamese diacritics for text matching.
   String _foldVietnamese(String input) {
     const replacements = <String, String>{
       'à': 'a',
