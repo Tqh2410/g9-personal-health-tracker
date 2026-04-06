@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../models/activity_entry.dart';
+
 import '../providers/auth_provider.dart';
 import '../providers/dashboard_refresh_provider.dart';
 import '../services/activity_service.dart';
