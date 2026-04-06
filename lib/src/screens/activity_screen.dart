@@ -42,9 +42,8 @@ class ActivityScreen extends ConsumerWidget {
     return grouped;
   }
 
-  String _dayHeaderLabel(DateTime day) {
-    return DateFormat('dd/MM/yyyy').format(day);
-  }
+  String _dayHeaderLabel(DateTime day) =>
+      DateFormat('dd/MM/yyyy').format(day);
 
   IconData _activityIcon(String type) {
     final normalized = type.toLowerCase();
