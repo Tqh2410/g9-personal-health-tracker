@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Model representing a single activity log entry.
 class ActivityEntry {
   final String id;
   final String type;
